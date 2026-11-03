@@ -1,1 +1,65 @@
 @import 'tailwindcss';
+
+@theme {
+    /* Fonts. 'Public Sans' / 'IBM Plex Mono' are NOT bundled yet; the system
+       fonts below are used until the font dependency is approved. */
+    --font-sans: 'Public Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+
+    /* Brand */
+    --color-brand: #1e3a8a;
+    --color-brand-hover: #172e6e;
+    --color-brand-soft: #dbe4fb; /* active nav item background */
+
+    /* Surfaces, text, borders */
+    --color-page: #f8fafc;
+    --color-surface: #ffffff;
+    --color-border: #cbd5e1;
+    --color-border-strong: #64748b; /* form control borders */
+    --color-ink: #0f172a; /* headings, strong text */
+    --color-body: #334155; /* normal text */
+    --color-muted: #64748b; /* secondary text */
+    --color-disabled-bg: #cbd5e1;
+    --color-disabled-fg: #475569;
+
+    /* Destructive actions (Reject, Cancel appointment, Deactivate) */
+    --color-danger: #991b1b;
+    --color-danger-hover: #7f1d1d;
+
+    /* Status palettes: bg / fg (text) / border */
+    --color-pending-bg: #fef3c7;
+    --color-pending-fg: #92400e;
+    --color-pending-border: #b45309;
+
+    --color-confirmed-bg: #dcfce7;
+    --color-confirmed-fg: #166534;
+    --color-confirmed-border: #166534;
+
+    --color-rejected-bg: #fee2e2;
+    --color-rejected-fg: #991b1b;
+    --color-rejected-border: #991b1b;
+
+    --color-cancelled-bg: #f1f5f9;
+    --color-cancelled-fg: #475569;
+    --color-cancelled-border: #94a3b8;
+
+    --color-completed-bg: #ccfbf1;
+    --color-completed-fg: #115e59;
+    --color-completed-border: #115e59;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-page);
+        color: var(--color-body);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Visible keyboard focus everywhere (accessibility). */
+    :focus-visible {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+}
