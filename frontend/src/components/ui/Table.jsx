@@ -1,9 +1,12 @@
 import { cx } from '../../utils/classNames'
 
-export function Table({ children }) {
+export function Table({ label, compact = false, children }) {
     return (
         <div className="relative overflow-x-auto">
-            <table className="w-full border-collapse text-left text-base">{children}</table>
+            <table className={cx('w-full border-collapse text-left', compact ? 'text-sm' : 'text-base')}>
+                {label && <caption className="sr-only">{label}</caption>}
+                {children}
+            </table>
         </div>
     )
 }

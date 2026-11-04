@@ -12,6 +12,7 @@ import RequestFormPage from './pages/public/RequestFormPage'
 import RequestSubmittedPage from './pages/public/RequestSubmittedPage'
 import MockDataPage from './pages/dev/MockDataPage'
 import StyleGuidePage from './pages/dev/StyleGuidePage'
+import DashboardPage from './pages/staff/DashboardPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { NAV } from './routes/navigation'
 import { PERMISSIONS } from './utils/permissions'
@@ -49,7 +50,7 @@ function App() {
 
           {/* Signed-in pages inside the staff layout */}
           <Route element={<StaffLayout/>}>
-            <Route path="/dashboard" element={<ComingSoonPage title="Dashboard" />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route
               path="/request"
               element={

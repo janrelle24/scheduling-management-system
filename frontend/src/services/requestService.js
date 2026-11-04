@@ -3,7 +3,7 @@ import { db } from '../data/store'
 import { getDisplayStatus } from '../utils/status'
 import { getManilaDateStr } from '../utils/datetime'
 import { ApiError } from './ApiError'
-import { findAppointmentForRequest, getUserName } from './lookups'
+import { countByDisplayStatus, findAppointmentForRequest, getUserName } from './lookups'
 import { inDateRange, mockApi, paginate } from './mockApi'
 
 function toListItem(request) {
@@ -66,4 +66,11 @@ export function getRequest(id) {
             .map((row) => ({ ...row, actorName: getUserName(row.userId) })),
         }
     })
+}
+
+export function getStatusCounts() {
+    return mockApi(() => ({
+        total: db.requests.length,
+        statusCounts: countByDisplayStatus(db.requests),
+    }))
 }

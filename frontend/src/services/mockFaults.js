@@ -10,3 +10,15 @@ export function getSubmissionFault() {
 export function setSubmissionFault(fault) {
     submissionFault = fault
 }
+
+// Makes EVERY service call fail with a server error (to test loading-failed screens).
+//   none | server_error
+let readFault = 'none'
+
+export function getReadFault() {
+    return readFault
+}
+
+export function setReadFault(fault) {
+    readFault = fault
+}

@@ -13,7 +13,7 @@ function Badge({ tone = 'neutral', className, children }) {
     return (
         <span
         className={cx(
-            'inline-flex items-center rounded-md px-2 py-0.5 text-sm font-semibold leading-5',
+            'inline-flex items-center rounded-md px-2 py-0.5 text-sm font-semibold leading-5 whitespace-nowrap',
             tones[tone],
             className,
         )}

@@ -5,11 +5,17 @@ import SelectField from "./ui/SelectField";
 import TextLink from "./ui/TextLink";
 import { mockUsers } from '../data/mockUsers'
 import { useSession } from '../hooks/useSession'
-import { getSubmissionFault, setSubmissionFault } from '../services/mockFaults'
+import {
+    getReadFault,
+    getSubmissionFault, 
+    setReadFault,
+    setSubmissionFault 
+} from '../services/mockFaults'
 
 function DevSessionSwitcher(){
     const { user, signInAs, signOut } = useSession()
     const [fault, setFault] = useState(getSubmissionFault())
+    const [readFault, setReadFaultState] = useState(getReadFault())
 
     function handleChange(event){
         const userId = event.target.value
@@ -20,6 +26,11 @@ function DevSessionSwitcher(){
     function handleFaultChange(event) {
         setFault(event.target.value)
         setSubmissionFault(event.target.value)
+    }
+
+    function handleReadFaultChange(event) {
+        setReadFaultState(event.target.value)
+        setReadFault(event.target.value)
     }
     return (
         <details className="fixed bottom-20 left-3 z-40 w-72 rounded-lg border border-pending-border bg-pending-bg text-pending-fg shadow-lg lg:bottom-4">
@@ -44,6 +55,11 @@ function DevSessionSwitcher(){
                     <option value="rate_limited">Fail: rate limited</option>
                     <option value="network_error">Fail: network error</option>
                 </SelectField>
+                <SelectField label="Data loading (all pages)" value={readFault} onChange={handleReadFaultChange}>
+                    <option value="none">Works normally</option>
+                    <option value="server_error">Fail: server error</option>
+                </SelectField>
+                <TextLink to="/dashboard">Open staff dashboard</TextLink>
                 <TextLink to="/dev/style-guide">Open style guide</TextLink>
                 <TextLink to="/dev/mock-data">Open mock data checks</TextLink>
             </div>

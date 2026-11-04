@@ -8,3 +8,13 @@ export const DISPLAY_STATUSES = ['pending', 'confirmed', 'rejected', 'cancelled'
 export function getDisplayStatus(request, appointment) {
     return appointment ? appointment.status : request.status
 }
+
+export const STATUS_LABELS = {
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    rejected: 'Rejected',
+    cancelled: 'Cancelled',
+    completed: 'Completed',
+}
+
+export const SOURCE_LABELS = { online: 'Online', in_person: 'In-person' }
