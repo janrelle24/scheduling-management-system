@@ -13,6 +13,7 @@ import RequestSubmittedPage from './pages/public/RequestSubmittedPage'
 import MockDataPage from './pages/dev/MockDataPage'
 import StyleGuidePage from './pages/dev/StyleGuidePage'
 import DashboardPage from './pages/staff/DashboardPage'
+import RequestDetailPage from './pages/staff/RequestDetailPage'
 import RequestsPage from './pages/staff/RequestsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { NAV } from './routes/navigation'
@@ -72,7 +73,7 @@ function App() {
               path="/requests/:id"
               element={
                 <ProtectedRoute requiresAny={[PERMISSIONS.REQUESTS_VIEW]} pageName="Request details">
-                  <ComingSoonPage title="Request details" />
+                  <RequestDetailPage />
                 </ProtectedRoute>
               }
             />
