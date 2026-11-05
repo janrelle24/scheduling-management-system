@@ -97,30 +97,30 @@ export function submitRequest(values) {
         const nowIso = toManilaIso(now)
         const requesterEmail = values.email.trim() || null
         const request = {
-        id: `req-${number}`,
-        referenceNumber: `REQ-2026-${number}`,
-        source: 'online',
-        requesterName: values.fullName.trim(),
-        requesterEmail,
-        requesterPhone: values.phone.trim() || null,
-        purpose: values.purpose.trim(),
-        preferredStartAt: startIso,
-        preferredEndAt: endIso,
-        status: 'pending',
-        encodedBy: null,
-        createdAt: nowIso,
-        updatedAt: nowIso,
+            id: `req-${number}`,
+            referenceNumber: `REQ-2026-${number}`,
+            source: 'online',
+            requesterName: values.fullName.trim(),
+            requesterEmail,
+            requesterPhone: values.phone.trim() || null,
+            purpose: values.purpose.trim(),
+            preferredStartAt: startIso,
+            preferredEndAt: endIso,
+            status: 'pending',
+            encodedBy: null,
+            createdAt: nowIso,
+            updatedAt: nowIso,
         }
         db.requests.push(request)
         db.statusHistory.push({
-        id: `hist-${number}-1`,
-        requestId: request.id,
-        appointmentId: null,
-        oldStatus: null,
-        newStatus: 'pending',
-        changedBy: null,
-        reason: null,
-        changedAt: nowIso,
+            id: `hist-${number}-1`,
+            requestId: request.id,
+            appointmentId: null,
+            oldStatus: null,
+            newStatus: 'pending',
+            changedBy: null,
+            reason: null,
+            changedAt: nowIso,
         })
         if (requesterEmail) {
         db.notifications.push({
@@ -147,13 +147,13 @@ export function submitRequest(values) {
         )
 
         return {
-        referenceNumber: request.referenceNumber,
-        status: 'pending',
-        preferredStartAt: startIso,
-        preferredEndAt: endIso,
-        requesterEmail,
-        acknowledgement: requesterEmail ? 'queued' : 'none',
-        timeMayBeUnavailable,
+            referenceNumber: request.referenceNumber,
+            status: 'pending',
+            preferredStartAt: startIso,
+            preferredEndAt: endIso,
+            requesterEmail,
+            acknowledgement: requesterEmail ? 'queued' : 'none',
+            timeMayBeUnavailable,
         }
     })
 }

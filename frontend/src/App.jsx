@@ -13,6 +13,7 @@ import RequestSubmittedPage from './pages/public/RequestSubmittedPage'
 import MockDataPage from './pages/dev/MockDataPage'
 import StyleGuidePage from './pages/dev/StyleGuidePage'
 import DashboardPage from './pages/staff/DashboardPage'
+import RequestsPage from './pages/staff/RequestsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { NAV } from './routes/navigation'
 import { PERMISSIONS } from './utils/permissions'
@@ -52,10 +53,10 @@ function App() {
           <Route element={<StaffLayout/>}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route
-              path="/request"
+              path="/requests"
               element={
                 <ProtectedRoute item={NAV.requests}>
-                  <ComingSoonPage title="Requests & Appointments" />
+                  <RequestsPage />
                 </ProtectedRoute>
               }
             />

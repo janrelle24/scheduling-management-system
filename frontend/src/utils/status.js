@@ -18,3 +18,6 @@ export const STATUS_LABELS = {
 }
 
 export const SOURCE_LABELS = { online: 'Online', in_person: 'In-person' }
+
+// An appointment can only be confirmed, cancelled or completed (Phase 2).
+export const APPOINTMENT_STATUSES = ['confirmed', 'cancelled', 'completed']

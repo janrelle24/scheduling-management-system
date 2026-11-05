@@ -1,5 +1,6 @@
-import { cx } from '../../utils/classNames'
-
+//import { cx } from '../../utils/classNames'
+import { buttonClass } from './buttonStyles'
+/*
 const base =
     'inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition-colors disabled:cursor-not-allowed'
 
@@ -33,6 +34,15 @@ function Button({
         {...props}
         />
     )
+}*/
+function Button({
+    variant = 'primary',
+    size = 'md',
+    type = 'button',
+    className,
+    ...props
+}){
+    return <button type={type} className={buttonClass(variant, size, className)} {...props} />
 }
 
 export default Button

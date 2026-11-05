@@ -55,8 +55,8 @@ export function getManilaDateStr(iso) {
 
 // '09:30' (24-hour clock time in Manila)
 export function getManilaTimeStr(iso) {
-  const get = manilaParts(iso, { hour: '2-digit', minute: '2-digit' })
-  return `${get('hour')}:${get('minute')}`
+    const get = manilaParts(iso, { hour: '2-digit', minute: '2-digit' })
+    return `${get('hour')}:${get('minute')}`
 }
 
 // Builds an ISO timestamp from a Manila date and time: ('2026-10-27', '09:30')
@@ -66,7 +66,7 @@ export function manilaIso(dateStr, timeStr) {
 
 // Adds minutes to an ISO timestamp and returns it with the +08:00 offset.
 export function plusMinutes(iso, minutes) {
-  const ms = new Date(iso).getTime() + minutes * 60000
+    const ms = new Date(iso).getTime() + minutes * 60000
     return new Date(ms + MANILA_OFFSET_MS).toISOString().slice(0, 19) + '+08:00'
 }
 

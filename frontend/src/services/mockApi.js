@@ -1,3 +1,6 @@
+import { ApiError } from './ApiError'
+import { getReadFault } from './mockFaults'
+
 const LATENCY_MS = 300
 
 // Pretends to be a network call: waits a moment, then returns a COPY of the data
@@ -5,6 +8,9 @@ const LATENCY_MS = 300
 // If the handler throws an ApiError, the returned promise rejects with it.
 export async function mockApi(handler) {
     await new Promise((resolve) => setTimeout(resolve, LATENCY_MS))
+    if (getReadFault() === 'server_error') {
+        throw new ApiError(500, 'server_error', 'Something went wrong.')
+    }
     return structuredClone(handler())
 }
 
