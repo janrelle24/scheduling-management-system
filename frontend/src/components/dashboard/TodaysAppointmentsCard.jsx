@@ -10,8 +10,13 @@ import { formatTimeRange, getManilaDateStr } from '../../utils/datetime'
 
 async function loadToday() {
     const today = getManilaDateStr(getNow())
-    const appointments = await listAppointments({ from: today, to: today })
-    return appointments.filter((appointment) => appointment.status !== 'cancelled')
+    const { items } = await listAppointments({
+        dateFrom: today,
+        dateTo: today,
+        order: 'asc',
+        pageSize: 50,
+    })
+    return items.filter((appointment) => appointment.status !== 'cancelled')
 }
 
 function TodaysAppointmentsCard(){

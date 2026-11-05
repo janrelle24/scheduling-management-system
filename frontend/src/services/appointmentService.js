@@ -2,7 +2,7 @@
 import { db } from '../data/store'
 import { getManilaDateStr } from '../utils/datetime'
 import { ApiError } from './ApiError'
-import { inDateRange, mockApi } from './mockApi'
+import { inDateRange, mockApi, paginate } from './mockApi'
 
 function toAppointmentItem(appointment) {
     const request = db.requests.find((row) => row.id === appointment.requestId)
@@ -15,15 +15,35 @@ function toAppointmentItem(appointment) {
     }
 }
 
-// params: { from, to, status } with dates as 'YYYY-MM-DD'. Earliest first.
-export function listAppointments({ from = '', to = '', status = '' } = {}) {
-    return mockApi(() =>
-        db.appointments
-        .filter((row) => !status || row.status === status)
-        .filter((row) => inDateRange(getManilaDateStr(row.startAt), from, to))
-        .map(toAppointmentItem)
-        .sort((a, b) => a.startAt.localeCompare(b.startAt)),
-    )
+
+export function listAppointments({
+    search = '',
+    status = '',
+    source = '',
+    dateFrom = '',
+    dateTo = '',
+    page = 1,
+    pageSize = 10,
+    order = 'desc',
+} = {}) {
+    return mockApi(() => {
+        const term = search.trim().toLowerCase()
+        const direction = order === 'asc' ? 1 : -1
+        const rows = db.appointments
+            .map(toAppointmentItem)
+            .filter((row) => !status || row.status === status)
+            .filter((row) => !source || row.source === source)
+            .filter((row) => inDateRange(getManilaDateStr(row.startAt), dateFrom, dateTo))
+            .filter(
+            (row) =>
+                !term ||
+                row.referenceNumber.toLowerCase().includes(term) ||
+                row.requesterName.toLowerCase().includes(term) ||
+                row.purpose.toLowerCase().includes(term),
+            )
+            .sort((a, b) => direction * a.startAt.localeCompare(b.startAt))
+        return paginate(rows, page, pageSize)
+    })
 }
 
 export function getAppointment(id) {
@@ -34,11 +54,7 @@ export function getAppointment(id) {
     })
 }
 
-// Everything the calendar draws for a date range:
-//  - "appointment" events: confirmed/completed. Confirmed ones BLOCK the time.
-//  - "request" events: pending requests at their preferred time. They do NOT block time.
-//  - unavailable periods and working hours (to draw hatched/closed time)
-// Cancelled appointments and rejected requests are not shown.
+
 export function getCalendar({ from, to }) {
     return mockApi(() => {
         const appointmentEvents = db.appointments
@@ -47,15 +63,15 @@ export function getCalendar({ from, to }) {
         .map((row) => {
             const item = toAppointmentItem(row)
             return {
-            id: row.id,
-            kind: 'appointment',
-            status: row.status,
-            title: item.purpose,
-            requesterName: item.requesterName,
-            referenceNumber: item.referenceNumber,
-            requestId: row.requestId,
-            startAt: row.startAt,
-            endAt: row.endAt,
+                id: row.id,
+                kind: 'appointment',
+                status: row.status,
+                title: item.purpose,
+                requesterName: item.requesterName,
+                referenceNumber: item.referenceNumber,
+                requestId: row.requestId,
+                startAt: row.startAt,
+                endAt: row.endAt,
             }
         })
 

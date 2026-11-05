@@ -23,5 +23,7 @@ export function useAsyncData(load) {
         setAttempt((count) => count + 1)
     }, [])
 
+    //if (state.load !== load) return { status: 'loading', data: null, error: null, reload }
+    //return { status: state.status, data: state.data, error: state.error, reload }
     return { ...state, reload }
 }
