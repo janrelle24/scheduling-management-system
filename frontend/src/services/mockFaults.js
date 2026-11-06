@@ -22,3 +22,16 @@ export function getReadFault() {
 export function setReadFault(fault) {
     readFault = fault
 }
+
+// Makes the approval email fail to send (to test the "email will be retried" message).
+// In the real system an email failure shows up later, from the sending queue.
+//   none | fail
+let emailFault = 'none'
+
+export function getEmailFault() {
+    return emailFault
+}
+
+export function setEmailFault(fault){
+    emailFault = fault
+}

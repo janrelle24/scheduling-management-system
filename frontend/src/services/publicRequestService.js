@@ -3,14 +3,15 @@
 import { db } from '../data/store'
 import { getNow } from '../utils/clock'
 import {
-    dayOfWeek,
+    //dayOfWeek,
     formatTime,
-    getManilaDateStr,
-    getManilaTimeStr,
+    //getManilaDateStr,
+    //getManilaTimeStr,
     manilaIso,
     plusMinutes,
     toManilaIso,
 } from '../utils/datetime'
+import { getOfficeRuleViolation } from '../utils/officeRules'
 import { overlaps } from '../utils/scheduling'
 import { validateRequestForm } from '../utils/validators'
 import { ApiError } from './ApiError'
@@ -20,7 +21,9 @@ import { mockApi } from './mockApi'
 const DUPLICATE_WINDOW_MINUTES = 10
 
 // Office hours, closed days, holidays and unavailable periods.
-// Messages are generic: they must not reveal why the office is unavailable.
+// The rules live in utils/officeRules.js (shared with approval). Messages here are generic:
+// they must not reveal why the office is unavailable.
+/*
 function checkOfficeRules(date, startIso, endIso, settings) {
     const rule = settings.workingHours.find((hours) => hours.daysOfWeek.includes(dayOfWeek(date)))
     if (!rule || !rule.start) {
@@ -43,6 +46,25 @@ function checkOfficeRules(date, startIso, endIso, settings) {
         }
     }
     return {}
+}*/
+function checkOfficeRules(date, startIso, endIso, settings){
+    const violation = getOfficeRuleViolation(startIso, endIso, settings)
+    if(!violation) return {}
+
+    switch(violation.code){
+        case 'closed_day':
+            return { date: 'The office is closed on that day. Please choose a workin day.'}
+        case 'outside_hours': {
+            const opens = formatTime(manilaIso(date, violation.rule.start))
+            const closes = formatTime(manilaIso(date, violation.rule.end))
+            return { startTime: `Choose a time within office hours (${opens}–${closes}).`}
+        }
+        case 'unavailable_day':
+            return { date: 'The office is unavailable on that day. Please choose another date.' }
+        default: //unavailable-period
+            return { startTime: 'The office is unavailable at that time. Please choose another time.' }
+
+    }
 }
 
 function digitsOf(text) {

@@ -1,8 +1,11 @@
 // Mirrors: GET /api/v1/appointments, GET /api/v1/appointments/:id, GET /api/v1/calendar
 import { db } from '../data/store'
 import { getManilaDateStr } from '../utils/datetime'
+import { PERMISSIONS } from '../utils/permissions'
 import { ApiError } from './ApiError'
+import { evaluateSlot, findNextAvailable } from './availability'
 import { inDateRange, mockApi, paginate } from './mockApi'
+import { requireActor } from './mockSession'
 
 function toAppointmentItem(appointment) {
     const request = db.requests.find((row) => row.id === appointment.requestId)
@@ -97,5 +100,22 @@ export function getCalendar({ from, to }) {
         workingHours: db.settings.workingHours,
         unavailable: db.settings.unavailable.filter((row) => inDateRange(row.date, from, to)),
         }
+    })
+}
+
+// PROPOSED endpoint (not in Phase 2): GET /api/v1/appointments/availability?startAt=&endAt=
+// Lets an approver preview a time before confirming. It exists because the scheduling
+// settings need settings.manage, so the browser cannot check office hours itself.
+// Returns { available, reason?, message?, conflict?, suggestions } (suggestions only when
+// not available). Needs appointments.approve or appointments.reschedule. The real
+// approve/reschedule endpoints repeat the check; this preview never books anything.
+export function checkAvailability({ startAt, endAt, excludeAppointmentId = null }) {
+    return mockApi(() => {
+        requireActor([PERMISSIONS.APPOINTMENTS_APPROVE, PERMISSIONS.APPOINTMENTS_RESCHEDULE])
+        const verdict = evaluateSlot({ startAt, endAt, excludeAppointmentId })
+        const suggestions = verdict.available
+            ? []
+            : findNextAvailable({ startAt, endAt, excludeAppointmentId })
+        return { ...verdict, suggestions }
     })
 }

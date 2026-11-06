@@ -6,8 +6,10 @@ import TextLink from "./ui/TextLink";
 import { mockUsers } from '../data/mockUsers'
 import { useSession } from '../hooks/useSession'
 import {
+    getEmailFault,
     getReadFault,
-    getSubmissionFault, 
+    getSubmissionFault,
+    setEmailFault, 
     setReadFault,
     setSubmissionFault 
 } from '../services/mockFaults'
@@ -16,6 +18,7 @@ function DevSessionSwitcher(){
     const { user, signInAs, signOut } = useSession()
     const [fault, setFault] = useState(getSubmissionFault())
     const [readFault, setReadFaultState] = useState(getReadFault())
+    const [emailFault, setEmailFaultState] = useState(getEmailFault())
 
     function handleChange(event){
         const userId = event.target.value
@@ -26,6 +29,10 @@ function DevSessionSwitcher(){
     function handleFaultChange(event) {
         setFault(event.target.value)
         setSubmissionFault(event.target.value)
+    }
+    function handleEmailFaultChange(event) {
+        setEmailFaultState(event.target.value)
+        setEmailFault(event.target.value)
     }
 
     function handleReadFaultChange(event) {
@@ -58,6 +65,10 @@ function DevSessionSwitcher(){
                 <SelectField label="Data loading (all pages)" value={readFault} onChange={handleReadFaultChange}>
                     <option value="none">Works normally</option>
                     <option value="server_error">Fail: server error</option>
+                </SelectField>
+                <SelectField label="Approval emails" value={emailFault} onChange={handleEmailFaultChange}>
+                    <option value="none">Queue normally</option>
+                    <option value="fail">Fail to send</option>
                 </SelectField>
                 <TextLink to="/dashboard">Open staff dashboard</TextLink>
                 <TextLink to="/dev/style-guide">Open style guide</TextLink>

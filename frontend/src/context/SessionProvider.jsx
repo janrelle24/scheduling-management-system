@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SessionContext } from './sessionContext'
 import { mockUsers } from '../data/mockUsers'
+import { setMockActor } from '../services/mockSession'
 import { hasPermission } from '../utils/permissions'
 
 // SIMULATED session for development. It is NOT authentication and provides no
@@ -20,6 +21,11 @@ function SessionProvider({ children }){
             signOut: () => setUserId(null),
         }
     }, [userId]) 
+
+    // Tells the mock services who is "signed in", like the sign-in token will for the real API.
+    useEffect(() => {
+        setMockActor(value.user)
+    }, [value.user])
 
     return <SessionContext value={value}>{children}</SessionContext>
 }

@@ -1,10 +1,15 @@
 // Mirrors: GET /api/v1/appointment-requests and GET /api/v1/appointment-requests/:id
 import { db } from '../data/store'
 import { getDisplayStatus } from '../utils/status'
-import { getManilaDateStr } from '../utils/datetime'
+import { getNow } from '../utils/clock'
+import { getManilaDateStr, plusMinutes, toManilaIso } from '../utils/datetime'
+import { PERMISSIONS } from '../utils/permissions'
 import { ApiError } from './ApiError'
+import { evaluateSlot } from './availability'
 import { countByDisplayStatus, findAppointmentForRequest, getUserName } from './lookups'
 import { inDateRange, mockApi, paginate } from './mockApi'
+import { getEmailFault } from './mockFaults'
+import { requireActor } from './mockSession'
 
 function toListItem(request) {
     const appointment = findAppointmentForRequest(request.id)
@@ -73,4 +78,95 @@ export function getStatusCounts() {
         total: db.requests.length,
         statusCounts: countByDisplayStatus(db.requests),
     }))
+}
+
+
+// Mirrors: POST /api/v1/appointment-requests/:id/approve   (appointments.approve)
+// body: { startAt, endAt }  -> creates the appointment and confirms the request.
+// Errors: 401, 403 (no permission), 404, 409 not_pending (already handled), and
+// slot_unavailable (409 for a conflict, 422 for office rules / past / bad range).
+// In the real backend ALL of the writes below happen in ONE database transaction, and an
+// exclusion constraint stops two overlapping bookings even if two staff approve at once.
+// Here the handler runs without interruption, which stands in for that.
+// Returns { appointmentId, startAt, endAt, notification: 'queued' | 'failed' | 'none' }.
+export function approveRequest(id, { startAt, endAt }) {
+    return mockApi(() => {
+        const actor = requireActor(PERMISSIONS.APPOINTMENTS_APPROVE)
+        const request = db.requests.find((row) => row.id === id)
+        if (!request) throw new ApiError(404, 'not_found', 'Request not found.')
+        if (request.status !== 'pending') {
+            throw new ApiError(409, 'not_pending', 'This request was already handled.', {
+            currentStatus: request.status,
+            })
+        }
+    
+        const verdict = evaluateSlot({ startAt, endAt })
+        if (!verdict.available) {
+            throw new ApiError(
+            verdict.reason === 'conflict' ? 409 : 422,
+            'slot_unavailable',
+            verdict.message,
+            { reason: verdict.reason, conflict: verdict.conflict ?? null },
+            )
+        }
+    
+        const nowIso = toManilaIso(getNow())
+        const suffix = request.id.slice(4) // 'req-0142' -> '0142'
+        const appointmentId = `apt-${suffix}`
+    
+        db.appointments.push({
+            id: appointmentId,
+            requestId: request.id,
+            startAt,
+            endAt,
+            status: 'confirmed',
+            confirmedBy: actor.id,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+        })
+        request.status = 'confirmed'
+        request.updatedAt = nowIso
+        db.statusHistory.push({
+            id: `hist-${suffix}-approved`,
+            requestId: request.id,
+            appointmentId,
+            oldStatus: 'pending',
+            newStatus: 'confirmed',
+            changedBy: actor.id,
+            reason: null,
+            changedAt: nowIso,
+        })
+        db.auditLogs.push({
+            id: `aud-approved-${suffix}`,
+            userId: actor.id,
+            action: 'request.approved',
+            entityType: 'appointment_request',
+            entityId: request.id,
+            details: { referenceNumber: request.referenceNumber },
+            ipAddress: null,
+            createdAt: nowIso,
+        })
+    
+        // The email is queued. A failure never undoes the appointment (FR-23, API-09).
+        let notification = 'none'
+        if (request.requesterEmail) {
+            const failed = getEmailFault() === 'fail'
+            notification = failed ? 'failed' : 'queued'
+            db.notifications.push({
+            id: `ntf-approved-${suffix}`,
+            requestId: request.id,
+            appointmentId,
+            recipientEmail: request.requesterEmail,
+            templateKey: 'approval',
+            status: failed ? 'failed' : 'queued',
+            attemptCount: failed ? 1 : 0,
+            lastError: failed ? 'Mailbox unavailable' : null,
+            nextAttemptAt: failed ? plusMinutes(nowIso, 15) : nowIso,
+            createdAt: nowIso,
+            sentAt: null,
+            })
+        }
+    
+        return { appointmentId, startAt, endAt, notification }
+    })
 }
