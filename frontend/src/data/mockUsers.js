@@ -39,7 +39,7 @@ export const mockUsers = [
         email: 'liza@office.gov.ph',
         role: 'staff',
         isActive: true,
-        permissions: [P.REQUESTS_VIEW, P.APPOINTMENTS_VIEW, P.REPORTS_VIEW, P.REPORTS_EXPORT],
+        permissions: [P.REQUESTS_VIEW, P.APPOINTMENTS_VIEW, P.APPOINTMENTS_CANCEL, P.APPOINTMENTS_RESCHEDULE, P.REPORTS_VIEW, P.REPORTS_EXPORT],
     },
     {
         id: 'user-ben',

@@ -1,9 +1,11 @@
 // Mirrors: GET /api/v1/appointments, GET /api/v1/appointments/:id, GET /api/v1/calendar
 import { db } from '../data/store'
 import { getManilaDateStr } from '../utils/datetime'
+import { getNow } from '../utils/clock'
 import { PERMISSIONS } from '../utils/permissions'
 import { ApiError } from './ApiError'
 import { evaluateSlot, findNextAvailable } from './availability'
+import { nowIso, normalizeReason, queueDecisionEmail, recordChange } from './decisions'
 import { inDateRange, mockApi, paginate } from './mockApi'
 import { requireActor } from './mockSession'
 
@@ -117,5 +119,115 @@ export function checkAvailability({ startAt, endAt, excludeAppointmentId = null 
             ? []
             : findNextAvailable({ startAt, endAt, excludeAppointmentId })
         return { ...verdict, suggestions }
+    })
+}
+
+// Shared by cancel and reschedule: only a confirmed appointment that has not ended can change.
+function getChangeableAppointment(id) {
+    const appointment = db.appointments.find((row) => row.id === id)
+    if (!appointment) throw new ApiError(404, 'not_found', 'Appointment not found.')
+    if (appointment.status !== 'confirmed') {
+        throw new ApiError(409, 'not_active', 'This appointment was already handled.', {
+            currentStatus: appointment.status,
+        })
+    }
+    if (new Date(appointment.endAt) <= getNow()) {
+        throw new ApiError(409, 'already_ended', 'This appointment has already ended.')
+    }
+    return appointment
+}
+
+// Mirrors: POST /api/v1/appointments/:id/cancel   (appointments.cancel)
+// body: { reason }. The time is released at once: only confirmed appointments block time (BR-006).
+// Errors: 401, 403, 404, 409 not_active / already_ended, 422 validation_failed.
+// Returns { notification: 'queued' | 'failed' | 'none' }.
+export function cancelAppointment(id, { reason } = {}) {
+    return mockApi(() => {
+        const actor = requireActor(PERMISSIONS.APPOINTMENTS_CANCEL)
+        const appointment = getChangeableAppointment(id)
+        const cleanReason = normalizeReason(reason)
+        const request = db.requests.find((row) => row.id === appointment.requestId)
+    
+        const at = nowIso()
+        appointment.status = 'cancelled'
+        appointment.updatedAt = at
+        request.status = 'cancelled'
+        request.updatedAt = at
+        recordChange({
+            request,
+            appointmentId: appointment.id,
+            oldStatus: 'confirmed',
+            newStatus: 'cancelled',
+            actor,
+            reason: cleanReason,
+            at,
+            audit: {
+            action: 'appointment.cancelled',
+            entityType: 'appointment',
+            entityId: appointment.id,
+            details: { reason: cleanReason },
+            },
+        })
+        return {
+            notification: queueDecisionEmail({ request, appointmentId: appointment.id, templateKey: 'cancellation', at }),
+        }
+    })
+}
+
+// Mirrors: POST /api/v1/appointments/:id/reschedule   (appointments.reschedule)
+// body: { startAt, endAt }. The appointment keeps its identity and stays Confirmed (UC-05).
+// The check ignores the appointment's own current slot. The old time is only given up in the
+// same step that secures the new one, so it can never be left with neither (the real backend
+// does this in one transaction).
+// Errors: 401, 403, 404, 409 not_active / already_ended, 409 or 422 slot_unavailable,
+// 422 no_change. Returns { startAt, endAt, notification }.
+export function rescheduleAppointment(id, { startAt, endAt }) {
+    return mockApi(() => {
+        const actor = requireActor(PERMISSIONS.APPOINTMENTS_RESCHEDULE)
+        const appointment = getChangeableAppointment(id)
+    
+        if (
+            new Date(startAt).getTime() === new Date(appointment.startAt).getTime() &&
+            new Date(endAt).getTime() === new Date(appointment.endAt).getTime()
+        ) {
+            throw new ApiError(422, 'no_change', 'That is already the current time.')
+        }
+        const verdict = evaluateSlot({ startAt, endAt, excludeAppointmentId: appointment.id })
+        if (!verdict.available) {
+            throw new ApiError(
+            verdict.reason === 'conflict' ? 409 : 422,
+            'slot_unavailable',
+            verdict.message,
+            { reason: verdict.reason, conflict: verdict.conflict ?? null },
+            )
+        }
+
+        const request = db.requests.find((row) => row.id === appointment.requestId)
+        const fromStartAt = appointment.startAt
+        const at = nowIso()
+        appointment.startAt = startAt
+        appointment.endAt = endAt
+        appointment.updatedAt = at
+        request.updatedAt = at
+        recordChange({
+            request,
+            appointmentId: appointment.id,
+            oldStatus: 'confirmed',
+            newStatus: 'confirmed',
+            actor,
+            reason: 'Rescheduled to a new time',
+            at,
+            audit: {
+            action: 'appointment.rescheduled',
+            entityType: 'appointment',
+            entityId: appointment.id,
+            details: { fromStartAt, toStartAt: startAt },
+            },
+        })
+        return {
+            startAt,
+            endAt,
+            notification: queueDecisionEmail({ request, appointmentId: appointment.id, templateKey: 'reschedule', at }),
+        }
     })
 }

@@ -1,14 +1,16 @@
 // Mirrors: GET /api/v1/appointment-requests and GET /api/v1/appointment-requests/:id
 import { db } from '../data/store'
 import { getDisplayStatus } from '../utils/status'
-import { getNow } from '../utils/clock'
-import { getManilaDateStr, plusMinutes, toManilaIso } from '../utils/datetime'
+import { getManilaDateStr } from '../utils/datetime'
+//import { getNow } from '../utils/clock'
+//import { getManilaDateStr, plusMinutes, toManilaIso } from '../utils/datetime'
 import { PERMISSIONS } from '../utils/permissions'
 import { ApiError } from './ApiError'
 import { evaluateSlot } from './availability'
+import { nowIso, normalizeReason, queueDecisionEmail, recordChange } from './decisions'
 import { countByDisplayStatus, findAppointmentForRequest, getUserName } from './lookups'
 import { inDateRange, mockApi, paginate } from './mockApi'
-import { getEmailFault } from './mockFaults'
+//import { getEmailFault } from './mockFaults'
 import { requireActor } from './mockSession'
 
 function toListItem(request) {
@@ -110,9 +112,8 @@ export function approveRequest(id, { startAt, endAt }) {
             )
         }
     
-        const nowIso = toManilaIso(getNow())
-        const suffix = request.id.slice(4) // 'req-0142' -> '0142'
-        const appointmentId = `apt-${suffix}`
+        const at = nowIso()
+        const appointmentId = `apt-${request.id.slice(4)}` // 'req-0142' -> 'apt-0142'
     
         db.appointments.push({
             id: appointmentId,
@@ -121,52 +122,59 @@ export function approveRequest(id, { startAt, endAt }) {
             endAt,
             status: 'confirmed',
             confirmedBy: actor.id,
-            createdAt: nowIso,
-            updatedAt: nowIso,
+            createdAt: at,
+            updatedAt: at,
         })
         request.status = 'confirmed'
-        request.updatedAt = nowIso
-        db.statusHistory.push({
-            id: `hist-${suffix}-approved`,
-            requestId: request.id,
+        request.updatedAt = at
+        recordChange({
+            request,
             appointmentId,
             oldStatus: 'pending',
             newStatus: 'confirmed',
-            changedBy: actor.id,
-            reason: null,
-            changedAt: nowIso,
+            actor,
+            at,
+            audit: { action: 'request.approved', entityType: 'appointment_request', entityId: request.id },
         })
-        db.auditLogs.push({
-            id: `aud-approved-${suffix}`,
-            userId: actor.id,
-            action: 'request.approved',
-            entityType: 'appointment_request',
-            entityId: request.id,
-            details: { referenceNumber: request.referenceNumber },
-            ipAddress: null,
-            createdAt: nowIso,
-        })
-    
-        // The email is queued. A failure never undoes the appointment (FR-23, API-09).
-        let notification = 'none'
-        if (request.requesterEmail) {
-            const failed = getEmailFault() === 'fail'
-            notification = failed ? 'failed' : 'queued'
-            db.notifications.push({
-            id: `ntf-approved-${suffix}`,
-            requestId: request.id,
-            appointmentId,
-            recipientEmail: request.requesterEmail,
-            templateKey: 'approval',
-            status: failed ? 'failed' : 'queued',
-            attemptCount: failed ? 1 : 0,
-            lastError: failed ? 'Mailbox unavailable' : null,
-            nextAttemptAt: failed ? plusMinutes(nowIso, 15) : nowIso,
-            createdAt: nowIso,
-            sentAt: null,
+        const notification = queueDecisionEmail({ request, appointmentId, templateKey: 'approval', at })
+        return { appointmentId, startAt, endAt, notification }
+    })
+}
+
+// Mirrors: POST /api/v1/appointment-requests/:id/reject   (appointments.reject)
+// body: { reason }  -> the request becomes rejected; it never reserved a time (UC-04).
+// Errors: 401, 403, 404, 409 not_pending, 422 validation_failed (reason required / too long).
+// Returns { notification: 'queued' | 'failed' | 'none' }.
+
+export function rejectRequest(id, { reason } = {}) {
+    return mockApi(() => {
+        const actor = requireActor(PERMISSIONS.APPOINTMENTS_REJECT)
+        const request = db.requests.find((row) => row.id === id)
+        if (!request) throw new ApiError(404, 'not_found', 'Request not found.')
+        if (request.status !== 'pending') {
+            throw new ApiError(409, 'not_pending', 'This request was already handled.', {
+            currentStatus: request.status,
             })
         }
+        const cleanReason = normalizeReason(reason)
     
-        return { appointmentId, startAt, endAt, notification }
+        const at = nowIso()
+        request.status = 'rejected'
+        request.updatedAt = at
+        recordChange({
+            request,
+            oldStatus: 'pending',
+            newStatus: 'rejected',
+            actor,
+            reason: cleanReason,
+            at,
+            audit: {
+            action: 'request.rejected',
+            entityType: 'appointment_request',
+            entityId: request.id,
+            details: { reason: cleanReason },
+            },
+        })
+        return { notification: queueDecisionEmail({ request, templateKey: 'rejection', at }) }
     })
 }
