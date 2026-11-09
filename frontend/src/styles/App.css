@@ -63,3 +63,9 @@
         outline-offset: 2px;
     }
 }
+
+/* Non-working time on the calendar: closed days, holidays and unavailable periods. */
+.hatched {
+    background-color: #eef2f7;
+    background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--color-border) 6px 7px);
+}

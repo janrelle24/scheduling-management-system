@@ -17,6 +17,11 @@ function format(iso, options) {
 export const formatDate = (iso) => format(iso, { month: 'short', day: 'numeric', year: 'numeric' }) // Oct 27, 2026
 export const formatWeekdayDate = (iso) =>
     format(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) // Tue, Oct 27, 2026
+export const formatDayHeading = (iso) =>
+    format(iso, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }) // Monday, Oct 26, 2026
+export const formatMonthYear = (iso) => format(iso, { month: 'long', year: 'numeric' }) // October 2026
+export const formatDayColumn = (iso) =>
+    `${format(iso, { weekday: 'short' })} ${format(iso, { day: 'numeric' })}` // Mon 26
 export const formatShortDate = (iso) => format(iso, { month: 'short', day: 'numeric' }) // Oct 27
 export const formatLongDate = (iso) =>
   format(iso, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) // Monday, October 26, 2026

@@ -2,7 +2,7 @@
 import { db } from '../data/store'
 import { getManilaDateStr } from '../utils/datetime'
 import { getNow } from '../utils/clock'
-import { PERMISSIONS } from '../utils/permissions'
+import { hasPermission, PERMISSIONS } from '../utils/permissions'
 import { ApiError } from './ApiError'
 import { evaluateSlot, findNextAvailable } from './availability'
 import { nowIso, normalizeReason, queueDecisionEmail, recordChange } from './decisions'
@@ -62,38 +62,42 @@ export function getAppointment(id) {
 
 export function getCalendar({ from, to }) {
     return mockApi(() => {
-        const appointmentEvents = db.appointments
-        .filter((row) => row.status !== 'cancelled')
-        .filter((row) => inDateRange(getManilaDateStr(row.startAt), from, to))
-        .map((row) => {
-            const item = toAppointmentItem(row)
-            return {
-                id: row.id,
-                kind: 'appointment',
-                status: row.status,
-                title: item.purpose,
-                requesterName: item.requesterName,
-                referenceNumber: item.referenceNumber,
-                requestId: row.requestId,
-                startAt: row.startAt,
-                endAt: row.endAt,
-            }
-        })
+        const actor = requireActor([PERMISSIONS.APPOINTMENTS_VIEW, PERMISSIONS.REQUESTS_VIEW])
+        const appointmentEvents = !hasPermission(actor, PERMISSIONS.APPOINTMENTS_VIEW)
+        ? []
+        : db.appointments
+            .filter((row) => row.status === 'confirmed' || row.status === 'completed')
+            .filter((row) => inDateRange(getManilaDateStr(row.startAt), from, to))
+            .map((row) => {
+                const item = toAppointmentItem(row)
+                return {
+                    id: row.id,
+                    kind: 'appointment',
+                    status: row.status,
+                    title: item.purpose,
+                    referenceNumber: item.referenceNumber,
+                    requestId: row.requestId,
+                    startAt: row.startAt,
+                    endAt: row.endAt,
+                }
+            })
 
-        const requestEvents = db.requests
-        .filter((row) => row.status === 'pending')
-        .filter((row) => inDateRange(getManilaDateStr(row.preferredStartAt), from, to))
-        .map((row) => ({
-            id: row.id,
-            kind: 'request',
-            status: 'pending',
-            title: row.purpose,
-            requesterName: row.requesterName,
-            referenceNumber: row.referenceNumber,
-            requestId: row.id,
-            startAt: row.preferredStartAt,
-            endAt: row.preferredEndAt,
-        }))
+        const requestEvents = !hasPermission(actor, PERMISSIONS.REQUESTS_VIEW)
+            ? []
+            : db.requests
+                .filter((row) => row.status === 'pending')
+                .filter((row) => inDateRange(getManilaDateStr(row.preferredStartAt), from, to))
+                .map((row) => ({
+                    id: row.id,
+                    kind: 'request',
+                    status: 'pending',
+                    title: row.purpose,
+                    requesterName: row.requesterName,
+                    referenceNumber: row.referenceNumber,
+                    requestId: row.id,
+                    startAt: row.preferredStartAt,
+                    endAt: row.preferredEndAt,
+                }))
 
         return {
         from,
@@ -162,10 +166,10 @@ export function cancelAppointment(id, { reason } = {}) {
             reason: cleanReason,
             at,
             audit: {
-            action: 'appointment.cancelled',
-            entityType: 'appointment',
-            entityId: appointment.id,
-            details: { reason: cleanReason },
+                action: 'appointment.cancelled',
+                entityType: 'appointment',
+                entityId: appointment.id,
+                details: { reason: cleanReason },
             },
         })
         return {
@@ -218,10 +222,10 @@ export function rescheduleAppointment(id, { startAt, endAt }) {
             reason: 'Rescheduled to a new time',
             at,
             audit: {
-            action: 'appointment.rescheduled',
-            entityType: 'appointment',
-            entityId: appointment.id,
-            details: { fromStartAt, toStartAt: startAt },
+                action: 'appointment.rescheduled',
+                entityType: 'appointment',
+                entityId: appointment.id,
+                details: { fromStartAt, toStartAt: startAt },
             },
         })
         return {

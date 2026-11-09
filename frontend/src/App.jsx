@@ -12,6 +12,7 @@ import RequestFormPage from './pages/public/RequestFormPage'
 import RequestSubmittedPage from './pages/public/RequestSubmittedPage'
 import MockDataPage from './pages/dev/MockDataPage'
 import StyleGuidePage from './pages/dev/StyleGuidePage'
+import CalendarPage from './pages/staff/CalendarPage'
 import DashboardPage from './pages/staff/DashboardPage'
 import NewInPersonRequestPage from './pages/staff/NewInPersonRequestPage'
 import RequestDetailPage from './pages/staff/RequestDetailPage'
@@ -82,7 +83,7 @@ function App() {
               path="/calendar"
               element={
                 <ProtectedRoute item={NAV.calendar}>
-                  <ComingSoonPage title="Calendar" />
+                  <CalendarPage />
                 </ProtectedRoute>
               }
             />
