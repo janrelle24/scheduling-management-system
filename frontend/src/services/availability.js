@@ -26,6 +26,23 @@ function findConflict(startAt, endAt, excludeAppointmentId) {
         overlaps(plusMinutes(startAt, -buffer), plusMinutes(endAt, buffer), appointment.startAt, appointment.endAt),
     )
 }
+// Staff-facing wording for an office-rule violation (the public form uses generic wording).
+export function officeRuleMessage({ code, rule, period }, startAt) {
+    const date = getManilaDateStr(startAt)
+    switch (code) {
+        case 'closed_day':
+            return 'The office is closed on that day.'
+        case 'outside_hours':
+            return `Outside office hours (${formatTimeRange(manilaIso(date, rule.start), manilaIso(date, rule.end))}).`
+        case 'unavailable_day':
+            return `The office is marked unavailable that day (${period.label}).`
+        default: // unavailable_period
+            return `The office is marked unavailable then (${period.label}, ${formatTimeRange(
+            manilaIso(period.date, period.start),
+            manilaIso(period.date, period.end),
+            )}).`
+    }
+}
 
 // { available: true } or { available: false, reason, message, conflict? }
 // Checks in this order: valid range, not in the past, office rules, other appointments.
@@ -40,14 +57,7 @@ export function evaluateSlot({ startAt, endAt, excludeAppointmentId = null }) {
 
     const violation = getOfficeRuleViolation(startAt, endAt, db.settings)
     if (violation) {
-        const { code, rule, period } = violation
-        const message = {
-        closed_day: 'The office is closed on that day.',
-        outside_hours: `Outside office hours (${formatTimeRange(manilaIso(getManilaDateStr(startAt), rule?.start ?? '00:00'), manilaIso(getManilaDateStr(startAt), rule?.end ?? '00:00'))}).`,
-        unavailable_day: `The office is marked unavailable that day (${period?.label}).`,
-        unavailable_period: `The office is marked unavailable then (${period?.label}, ${period && formatTimeRange(manilaIso(period.date, period.start), manilaIso(period.date, period.end))}).`,
-        }[code]
-        return { available: false, reason: code, message }
+        return { available: false, reason: violation.code, message: officeRuleMessage(violation, startAt) }
     }
 
     const conflict = findConflict(startAt, endAt, excludeAppointmentId)
@@ -74,15 +84,15 @@ export function findNextAvailable({ startAt, endAt, excludeAppointmentId = null 
     for (let dayOffset = 0; dayOffset <= SUGGESTION_SEARCH_DAYS; dayOffset += 1) {
         const date = addDays(firstDate, dayOffset)
         for (let minutes = 0; minutes < 24 * 60; minutes += SUGGESTION_STEP_MINUTES) {
-        const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
-        const candidateStart = manilaIso(date, time)
-        if (new Date(candidateStart) < minNextStart) continue
-        const candidateEnd = plusMinutes(candidateStart, length)
-        if (evaluateSlot({ startAt: candidateStart, endAt: candidateEnd, excludeAppointmentId }).available) {
-            suggestions.push({ startAt: candidateStart, endAt: candidateEnd })
-            if (suggestions.length === count) return suggestions
-            minNextStart = new Date(candidateEnd)
-        }
+            const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+            const candidateStart = manilaIso(date, time)
+            if (new Date(candidateStart) < minNextStart) continue
+            const candidateEnd = plusMinutes(candidateStart, length)
+            if (evaluateSlot({ startAt: candidateStart, endAt: candidateEnd, excludeAppointmentId }).available) {
+                suggestions.push({ startAt: candidateStart, endAt: candidateEnd })
+                if (suggestions.length === count) return suggestions
+                minNextStart = new Date(candidateEnd)
+            }
         }
     }
     return suggestions

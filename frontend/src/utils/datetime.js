@@ -88,3 +88,12 @@ export function dayOfWeek(dateStr) {
     const [year, month, day] = dateStr.split('-').map(Number)
     return new Date(Date.UTC(year, month - 1, day)).getUTCDay()
 }
+
+// '09:30' + 60 minutes -> '10:30'. Returns '' when it would pass midnight or the time is invalid.
+export function addMinutesToTime(time, minutes) {
+    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time ?? '')
+    if (!match) return ''
+    const total = Number(match[1]) * 60 + Number(match[2]) + minutes
+    if (total < 0 || total >= 24 * 60) return ''
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}

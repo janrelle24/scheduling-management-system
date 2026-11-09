@@ -31,9 +31,10 @@ function RequestSummaryCard({ request }){
             </Row>
             )}
             <Row label="Contact">
-            {contact.length > 0 ? contact.join(' · ') : 'No email or phone provided'}
+                {contact.length > 0 ? contact.join(' · ') : 'No email or phone provided'}
             </Row>
             {request.encodedByName && <Row label="Encoded by">{request.encodedByName}</Row>}
+            {request.internalNotes && <Row label="Internal notes (staff only)">{request.internalNotes}</Row>}
         </dl>
         </Card>
     )

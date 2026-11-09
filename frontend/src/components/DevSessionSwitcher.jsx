@@ -56,7 +56,7 @@ function DevSessionSwitcher(){
                     </option>
                     ))}
                 </SelectField>
-                <SelectField label="Public form submissions" value={fault} onChange={handleFaultChange}>
+                <SelectField label="Saving new requests (public + staff)" value={fault} onChange={handleFaultChange}>
                     <option value="none">Succeed normally</option>
                     <option value="server_error">Fail: server error</option>
                     <option value="rate_limited">Fail: rate limited</option>
@@ -66,7 +66,7 @@ function DevSessionSwitcher(){
                     <option value="none">Works normally</option>
                     <option value="server_error">Fail: server error</option>
                 </SelectField>
-                <SelectField label="Approval emails" value={emailFault} onChange={handleEmailFaultChange}>
+                <SelectField label="Decision emails (approve, reject…)" value={emailFault} onChange={handleEmailFaultChange}>
                     <option value="none">Queue normally</option>
                     <option value="fail">Fail to send</option>
                 </SelectField>

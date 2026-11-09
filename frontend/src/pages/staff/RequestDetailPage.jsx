@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
+import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
 import ButtonLink from '../../components/ui/ButtonLink'
 import Card from '../../components/ui/Card'
@@ -21,6 +22,7 @@ import { SOURCE_LABELS } from '../../utils/status'
 
 function RequestDetailPage() {
     const { id } = useParams()
+    const created = useLocation().state?.created
     const load = useCallback(() => getRequest(id), [id])
     const { status, data: request, error, reload } = useAsyncData(load)
     
@@ -30,7 +32,17 @@ function RequestDetailPage() {
             <TextLink to="/requests" className="self-start">
                 ← Back to requests
             </TextLink>
-        
+
+            {created && (
+                <Alert tone="success" title="Request saved.">
+                    Reference number <strong className="font-mono">{created.referenceNumber}</strong>. Give this number to the
+                    requester.
+                    {created.timeMayBeUnavailable &&
+                        ' The preferred time overlaps a confirmed appointment, so it may need to change when the request is approved.'}
+                    {!created.emailOnFile && ' There is no email on file, so the requester will not receive notifications.'}
+                </Alert>
+            )}
+
             {status === 'loading' && <Spinner label="Loading request…" />}
         
             {status === 'error' && error?.status === 404 && (

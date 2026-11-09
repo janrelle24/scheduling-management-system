@@ -13,6 +13,7 @@ import RequestSubmittedPage from './pages/public/RequestSubmittedPage'
 import MockDataPage from './pages/dev/MockDataPage'
 import StyleGuidePage from './pages/dev/StyleGuidePage'
 import DashboardPage from './pages/staff/DashboardPage'
+import NewInPersonRequestPage from './pages/staff/NewInPersonRequestPage'
 import RequestDetailPage from './pages/staff/RequestDetailPage'
 import RequestsPage from './pages/staff/RequestsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
@@ -65,7 +66,7 @@ function App() {
               path="/requests/new"
               element={
                 <ProtectedRoute requiresAny={[PERMISSIONS.REQUESTS_CREATE]} pageName="New In-Person Request">
-                  <ComingSoonPage title="New In-Person Request" />
+                  <NewInPersonRequestPage />
                 </ProtectedRoute>
               }
             />
