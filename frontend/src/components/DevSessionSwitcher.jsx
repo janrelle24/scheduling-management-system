@@ -1,10 +1,12 @@
 // DEVELOPMENT ONLY. Lets you pretend to be different users to see how the
 // navigation changes. This is NOT authentication. It is not included in production builds.
 import { useState } from 'react'
+import Button from './ui/Button'
 import SelectField from "./ui/SelectField";
 import TextLink from "./ui/TextLink";
 import { mockUsers } from '../data/mockUsers'
 import { useSession } from '../hooks/useSession'
+import { expireMockSession, notifyUnauthorized } from '../services/mockSession'
 import {
     getEmailFault,
     getReadFault,
@@ -70,6 +72,17 @@ function DevSessionSwitcher(){
                     <option value="none">Queue normally</option>
                     <option value="fail">Fail to send</option>
                 </SelectField>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!user}
+                    onClick={() => {
+                        expireMockSession() // the "server" forgets the session...
+                        notifyUnauthorized() // ...and the next call would fail with 401: show the timeout screen now
+                    }}
+                    >
+                    Expire session (timeout)
+                </Button>
                 <TextLink to="/dashboard">Open staff dashboard</TextLink>
                 <TextLink to="/dev/style-guide">Open style guide</TextLink>
                 <TextLink to="/dev/mock-data">Open mock data checks</TextLink>

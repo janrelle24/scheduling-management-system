@@ -1,4 +1,5 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import DemoNotice from '../components/DemoNotice'
 import MobileTabBar from '../components/MobileTabBar'
 import StaffSidebar from '../components/StaffSidebar'
 import { useSession } from '../hooks/useSession'
@@ -6,7 +7,9 @@ import { useSession } from '../hooks/useSession'
 // Shell for every signed-in page: sidebar on desktop, top bar + bottom tabs on mobile.
 function StaffLayout() {
     const { user } = useSession()
-    if (!user) return <Navigate to="/sign-in" replace />
+    const location = useLocation()
+    // Not signed in: go to sign-in, and come back to this page afterwards.
+    if (!user) return <Navigate to="/sign-in" replace state={{ from: location }} />
 
     return (
         <div className="min-h-screen lg:flex">
@@ -18,6 +21,7 @@ function StaffLayout() {
         </a>
         <StaffSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
+            <DemoNotice />
             <header className="border-b border-border bg-surface px-4 py-4 lg:hidden">
             <p className="text-base font-bold text-brand">Vice Mayor's Office</p>
             </header>

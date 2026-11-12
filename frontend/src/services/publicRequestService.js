@@ -108,5 +108,5 @@ export function submitRequest(values) {
             acknowledgement,
             timeMayBeUnavailable: timeMayBeUnavailable(startIso, endIso),
         }
-    })
+    }, { public: true })
 }

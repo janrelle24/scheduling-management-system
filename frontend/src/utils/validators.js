@@ -8,6 +8,7 @@ export const FORM_FIELDS = ['fullName', 'email', 'phone', 'purpose', 'date', 'st
 export const STAFF_FORM_FIELDS = ['fullName', 'phone', 'email', 'purpose', 'date', 'startTime', 'endTime', 'internalNotes']
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+export const isValidEmail = (value) => EMAIL_PATTERN.test(value)
 const PHONE_CHARACTERS = /^[+\d\s\-().]+$/
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -79,5 +80,41 @@ export function validateStaffRequestForm(values, now) {
     if ((values.internalNotes ?? '').trim().length > LIMITS.notesMax) {
         errors.internalNotes = `Notes must be ${LIMITS.notesMax} characters or fewer.`
     }
+    return errors
+}
+
+// ---- Sign-in and password recovery ----
+
+// The office's password rule (Phase 3: "Use at least 12 characters"). No composition rules are
+// approved. The maximum is a proposal that keeps absurd inputs out of the hashing step.
+export const PASSWORD_LIMITS = { min: 12, max: 128 }
+
+export function validateSignIn({ email, password }) {
+    const errors = {}
+    if (!email.trim()) errors.email = 'Enter your email.'
+    else if (!isValidEmail(email.trim())) errors.email = 'Enter a valid email address.'
+    if (!password) errors.password = 'Enter your password.'
+    return errors
+}
+
+export function validateForgotPassword({ email }) {
+    if (!email.trim()) return { email: 'Enter your work email.' }
+    if (!isValidEmail(email.trim())) return { email: 'Enter a valid email address.' }
+    return {}
+}
+
+// Used by the reset form AND by the server check, so the rule lives in one place.
+export function validateNewPassword(password) {
+    if (password.length < PASSWORD_LIMITS.min) return `Use at least ${PASSWORD_LIMITS.min} characters.`
+    if (password.length > PASSWORD_LIMITS.max) return `Use ${PASSWORD_LIMITS.max} characters or fewer.`
+    return undefined
+}
+
+export function validateResetForm({ newPassword, confirmPassword }) {
+    const errors = {}
+    const passwordError = validateNewPassword(newPassword)
+    if (passwordError) errors.newPassword = passwordError
+    if (!confirmPassword) errors.confirmPassword = 'Confirm your new password.'
+    else if (confirmPassword !== newPassword) errors.confirmPassword = 'Passwords do not match.'
     return errors
 }

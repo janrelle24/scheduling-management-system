@@ -2,10 +2,15 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import DevSessionSwitcher from './components/DevSessionSwitcher'
 import SessionProvider from './context/SessionProvider'
 import ToastProvider from './context/ToastProvider'
-import { useSession } from './hooks/useSession'
+import AuthLayout from './layouts/AuthLayout'
+//import { useSession } from './hooks/useSession'
 import PublicLayout from './layouts/PublicLayout'
 import StaffLayout from './layouts/StaffLayout'
 import ComingSoonPage from './pages/ComingSoonPage'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
+import ResetPasswordPage from './pages/auth/ResetPasswordPage'
+import SignInPage from './pages/auth/SignInPage'
+import SignedOutPage from './pages/auth/SignedOutPage'
 import MorePage from './pages/MorePage'
 import NotFoundPage from './pages/NotFoundPage'
 import RequestFormPage from './pages/public/RequestFormPage'
@@ -21,7 +26,7 @@ import ProtectedRoute from './routes/ProtectedRoute'
 import { NAV } from './routes/navigation'
 import { PERMISSIONS } from './utils/permissions'
 
-function SignInPlaceholder(){
+/*function SignInPlaceholder(){
   const { user } = useSession()
   if (user) return <Navigate to="dashboard" replace/>
   return (
@@ -33,7 +38,7 @@ function SignInPlaceholder(){
       </p>
     </main>
   )
-}
+}*/
 function App() {
 
   return (
@@ -47,10 +52,13 @@ function App() {
             <Route path="/request" element={<RequestFormPage />} />
             <Route path="/request/submitted" element={<RequestSubmittedPage />} />
           </Route>
-          <Route path="/sign-in" element={<SignInPlaceholder />} />
-          <Route path="/forgot-password" element={<ComingSoonPage standalone title="Forgot password" />} />
-          <Route path="/reset-password" element={<ComingSoonPage standalone title="Set a new password" />} />
-          <Route path="/signed-out" element={<ComingSoonPage standalone title="You've been signed out" />} />
+          <Route path="/sign-in" element={<SignInPage />} />
+          <Route element={<AuthLayout />}>
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/signed-out" element={<SignedOutPage />} />
+          </Route>
+          
 
           {/* Signed-in pages inside the staff layout */}
           <Route element={<StaffLayout/>}>

@@ -1,5 +1,3 @@
-import { startTransition } from 'react'
-import { useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import TextLink from '../components/ui/TextLink'
@@ -11,18 +9,7 @@ import { getVisibleNavItems } from '../routes/navigation'
 // fit in the bottom tabs, plus Sign out.
 function MorePage() {
     const { user, signOut } = useSession()
-    const navigate = useNavigate()
     const adminItems = getVisibleNavItems(user).filter((item) => item.section === 'admin')
-
-    function handleSignOut() {
-        // React Router applies navigation inside a transition. Doing the same here keeps
-        // "signed out" and "go to /signed-out" in one render, so the layout doesn't
-        // redirect to /sign-in in between.
-        startTransition(() => {
-        signOut()
-        navigate('/signed-out')
-        })
-    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -37,8 +24,8 @@ function MorePage() {
                 ))}
             </ul>
             )}
-            <Button variant="secondary" onClick={handleSignOut}>
-            Sign out
+            <Button variant="secondary" onClick={signOut}>
+                Sign out
             </Button>
         </Card>
         </div>

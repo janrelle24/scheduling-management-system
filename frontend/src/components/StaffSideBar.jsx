@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import Button from './ui/Button'
 import { useSession } from '../hooks/useSession'
 import { getVisibleNavItems } from '../routes/navigation'
 import { cx } from '../utils/classNames'
@@ -21,7 +22,7 @@ function SidebarLink({ item }) {
 
 // Desktop sidebar (hidden below the lg breakpoint, where the bottom tabs are used).
 function StaffSidebar() {
-    const { user } = useSession()
+    const { user, signOut } = useSession()
     const items = getVisibleNavItems(user)
     const mainItems = items.filter((item) => item.section === 'main')
     const adminItems = items.filter((item) => item.section === 'admin')
@@ -52,6 +53,12 @@ function StaffSidebar() {
             </>
             )}
         </nav>
+        <div className="mt-auto border-t border-border pt-4">
+            <p className="truncate px-3 pb-2 text-sm text-muted">{user.fullName}</p>
+            <Button variant="secondary" size="sm" className="w-full" onClick={signOut}>
+                Sign out
+            </Button>
+        </div>
         </aside>
     )
 }
