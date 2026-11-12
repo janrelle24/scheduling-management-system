@@ -21,8 +21,10 @@ export const DEMO_PASSWORD = 'demo-password-2026'
 export const SHOW_DEV_HELPERS = import.meta.env?.DEV ?? true
 
 const RESET_LINK_MINUTES = 60
+const INVITATION_HOURS = 72
 const passwordsSetByReset = new Map() // userId -> password chosen through a reset (plain text: mock only)
 const resetTokens = new Map() // token -> { userId, expiresAt }
+const awaitingPassword = new Set() // invited accounts that have not chosen a password yet: they cannot sign in
 
 const normalizeEmail = (email) => (email ?? '').trim().toLowerCase()
 const findActiveUser = (email) =>
@@ -129,4 +131,19 @@ export function resetPassword({ token, newPassword }) {
         },
         { public: true },
     )
+}
+
+// Server-side only (used when an administrator creates an account): the new person gets a
+// single-use link to choose their own password, valid for 72 hours, and cannot sign in until
+// they do. It reuses the "Set a new password" screen. The real backend emails the link.
+// Returns the token (the mock shows it in development builds, since no email is sent).
+export function issueInvitation(userId) {
+    for (const [token, entry] of resetTokens) if (entry.userId === userId) resetTokens.delete(token)
+    const token = `invite-${globalThis.crypto.randomUUID()}`
+    resetTokens.set(token, {
+        userId,
+        expiresAt: plusMinutes(toManilaIso(getNow()), INVITATION_HOURS * 60),
+    })
+    awaitingPassword.add(userId)
+    return token
 }

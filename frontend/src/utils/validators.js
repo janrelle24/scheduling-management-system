@@ -118,3 +118,20 @@ export function validateResetForm({ newPassword, confirmPassword }) {
     else if (confirmPassword !== newPassword) errors.confirmPassword = 'Passwords do not match.'
     return errors
 }
+
+// ---- Staff accounts ----
+
+// Name, work email and role of an account. The email is only needed when creating one.
+export function validateAccountForm({ fullName, email, role }, { requireEmail = true } = {}) {
+    const errors = {}
+    const name = fullName.trim().replace(/\s+/g, ' ')
+    if (name.length < LIMITS.nameMin) errors.fullName = 'Enter the full name.'
+    else if (name.length > LIMITS.nameMax) errors.fullName = `Use ${LIMITS.nameMax} characters or fewer.`
+    if (requireEmail) {
+        const mail = (email ?? '').trim()
+        if (!mail) errors.email = 'Enter the work email.'
+        else if (!isValidEmail(mail) || mail.length > 255) errors.email = 'Enter a valid work email.'
+    }
+    if (role !== 'staff' && role !== 'administrator') errors.role = 'Choose a role.'
+    return errors
+}

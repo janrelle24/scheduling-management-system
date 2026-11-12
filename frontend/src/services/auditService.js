@@ -14,7 +14,12 @@ export const AUDIT_ACTIONS = [
     { value: 'appointment.cancelled', label: 'Cancelled appointment' },
     { value: 'appointment.completed', label: 'Marked completed' },
     { value: 'report.exported', label: 'Exported report' },
+    { value: 'user.created', label: 'Created account' },
+    { value: 'user.updated', label: 'Updated account' },
     { value: 'user.permissions_changed', label: 'Changed permissions' },
+    { value: 'user.deactivated', label: 'Deactivated account' },
+    { value: 'user.activated', label: 'Activated account' },
+    { value: 'security.access_denied', label: 'Access denied' },
     { value: 'auth.login_failed', label: 'Login failed' },
 ]
 
@@ -34,6 +39,7 @@ function getRecordLabel(row) {
     if (details.referenceNumber) return details.referenceNumber
     if (row.action === 'auth.login_failed') return details.email
     if (row.action === 'user.permissions_changed') return details.targetName
+    if (row.action === 'security.access_denied') return details.attempted ?? ''
     if (row.action === 'report.exported') return details.report
     return ''
 }

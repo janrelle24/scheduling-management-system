@@ -8,7 +8,7 @@ import TextLink from '../../components/ui/TextLink'
 import DemoNotice from '../../components/DemoNotice'
 import { useSession } from '../../hooks/useSession'
 import { DEMO_PASSWORD, SHOW_DEV_HELPERS } from '../../services/authService'
-import { mockUsers } from '../../data/mockUsers'
+import { db } from '../../data/store'
 import { validateSignIn } from '../../utils/validators'
 
 // Where to go after signing in: the page the person was trying to open, else the Dashboard.
@@ -29,7 +29,7 @@ function DevHint() {
             changes it).
             </p>
             <ul className="mt-1 list-disc pl-5">
-            {mockUsers.map((user) => (
+            {db.users.map((user) => (
                 <li key={user.id}>
                 <span className="font-mono">{user.email}</span> ({user.role}
                 {user.isActive ? '' : ', deactivated'})

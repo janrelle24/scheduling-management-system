@@ -5,15 +5,23 @@ import { getCalendar } from './appointmentService'
 import { setMockActor } from './mockSession'
 
 // Marco and Liza can view both requests and appointments; Elena (administrator) cannot view either.
+// account, so these tests change the stored permissions (and put them back) to try other cases.
 const as = (id) => setMockActor(mockUsers.find((candidate) => candidate.id === id))
 const week = { from: '2026-10-26', to: '2026-11-01' }
 
 describe('getCalendar', () => {
-    it('refuses without sign-in (401) and without any view permission (403)', async () => {
+    it('refuses without sign-in (401), for a deactivated account (401) and without any view permission (403)', async () => {
         setMockActor(null)
         await expect(getCalendar(week)).rejects.toMatchObject({ status: 401 })
-        as('user-ben')
+        as('user-ben') // deactivated: the stored account is inactive, so the session is over
+        await expect(getCalendar(week)).rejects.toMatchObject({ status: 401, code: 'session_ended' })
+    
+        const liza = db.users.find((u) => u.id === 'user-liza')
+        const kept = liza.permissions
+        liza.permissions = ['reports.view'] // can view neither requests nor appointments
+        as('user-liza')
         await expect(getCalendar(week)).rejects.toMatchObject({ status: 403 })
+        liza.permissions = kept
     })
 
     it('returns confirmed appointments and pending requests for the week, in time order', async () => {
@@ -46,14 +54,18 @@ describe('getCalendar', () => {
     it('shows pending requests only to users who can view requests, and appointments only to users who can view appointments', async () => {
         as('user-marco')
         const everything = await getCalendar(week)
-        const onlyAppointments = { ...mockUsers.find((u) => u.id === 'user-marco'), permissions: ['appointments.view'] }
-        setMockActor(onlyAppointments)
+        const marco = db.users.find((u) => u.id === 'user-marco')
+        const kept = marco.permissions
+
+        marco.permissions = ['appointments.view']
         const appointmentsOnly = await getCalendar(week)
         expect(appointmentsOnly.events.every((e) => e.kind === 'appointment')).toBe(true)
         expect(appointmentsOnly.events.length < everything.events.length).toBe(true)
-        setMockActor({ ...onlyAppointments, permissions: ['requests.view'] })
+
+        marco.permissions = ['requests.view']
         const requestsOnly = await getCalendar(week)
         expect(requestsOnly.events.every((e) => e.kind === 'request')).toBe(true)
+        marco.permissions = kept
     })
 
     it('includes the working hours and the unavailable periods inside the range', async () => {

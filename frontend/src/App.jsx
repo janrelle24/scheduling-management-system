@@ -3,7 +3,6 @@ import DevSessionSwitcher from './components/DevSessionSwitcher'
 import SessionProvider from './context/SessionProvider'
 import ToastProvider from './context/ToastProvider'
 import AuthLayout from './layouts/AuthLayout'
-//import { useSession } from './hooks/useSession'
 import PublicLayout from './layouts/PublicLayout'
 import StaffLayout from './layouts/StaffLayout'
 import ComingSoonPage from './pages/ComingSoonPage'
@@ -22,23 +21,12 @@ import DashboardPage from './pages/staff/DashboardPage'
 import NewInPersonRequestPage from './pages/staff/NewInPersonRequestPage'
 import RequestDetailPage from './pages/staff/RequestDetailPage'
 import RequestsPage from './pages/staff/RequestsPage'
+import StaffAccountsPage from './pages/staff/StaffAccountsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { NAV } from './routes/navigation'
 import { PERMISSIONS } from './utils/permissions'
 
-/*function SignInPlaceholder(){
-  const { user } = useSession()
-  if (user) return <Navigate to="dashboard" replace/>
-  return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-2xl font-bold text-ink">Sign in</h1>
-      <p className="mt-2">
-        The sign-in screen is built in a later feature. For now, use the DEV panel at the
-        bottom-left to pick a simulated user.
-      </p>
-    </main>
-  )
-}*/
+
 function App() {
 
   return (
@@ -108,7 +96,7 @@ function App() {
               path="/admin/staff-accounts"
               element={
                 <ProtectedRoute item={NAV.staffAccounts}>
-                  <ComingSoonPage title="Staff Accounts" />
+                  <StaffAccountsPage />
                 </ProtectedRoute>
               }
             />

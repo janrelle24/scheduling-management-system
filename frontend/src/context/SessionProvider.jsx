@@ -1,7 +1,8 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SessionContext } from './sessionContext'
-import { mockUsers } from '../data/mockUsers'
+import { db } from '../data/store'
+//import { mockUsers } from '../data/mockUsers'
 import { login, logout } from '../services/authService'
 import { onUnauthorized, setMockActor } from '../services/mockSession'
 import { hasPermission } from '../utils/permissions'
@@ -13,6 +14,7 @@ import { hasPermission } from '../utils/permissions'
 function SessionProvider({ children }){
     const navigate = useNavigate()
     const [userId, setUserId] = useState(null)
+    const [version, setVersion] = useState(0) // bumped to re-read the account after it was edited
     // The same value as userId, readable at once. Lets a late 401 know the person already signed out.
     const userIdRef = useRef(null)
 
@@ -24,8 +26,8 @@ function SessionProvider({ children }){
     // POST /auth/login. Throws the service's error (401 invalid_credentials, 422) for the screen to show.
     const signIn = useCallback(
         async (email, password) => {
-        const { user } = await login({ email, password })
-        setSession(user.id)
+            const { user } = await login({ email, password })
+            setSession(user.id)
         },
         [setSession],
     )
@@ -55,16 +57,20 @@ function SessionProvider({ children }){
         [navigate],
     )
 
+    const refreshSession = useCallback(() => setVersion((count) => count + 1), [])
+
     const value = useMemo(() => {
-        const user = mockUsers.find((u) => u.id === userId && u.isActive) ?? null
+        // `version` is read so this re-runs after an edit: the account lives in the (mock) stored accounts.
+        const user = version >= 0 ? (db.users.find((u) => u.id === userId && u.isActive) ?? null) : null
         return {
             user,
             can: (permission) => hasPermission(user, permission),
             signIn,
             signInAs: setSession, // DEV panel only: jump straight to a user, no password
             signOut,
+            refreshSession, // after an administrator edits their OWN account (the real app re-reads GET /auth/me)
         }
-    }, [userId, signIn, signOut, setSession]) 
+    }, [userId, version, signIn, signOut, setSession, refreshSession]) 
 
     // Tells the mock services who is "signed in", like the sign-in token will for the real API.
     useEffect(() => {

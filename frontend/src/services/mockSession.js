@@ -2,6 +2,7 @@
 // request. The mock services have no token, so the simulated session (SessionProvider)
 // tells them who is "signed in". This is what lets the mock services refuse an action
 // the way the server will: the screen checks are only for convenience, never security.
+import { db } from '../data/store'
 import { hasAnyPermission } from '../utils/permissions'
 import { ApiError } from './ApiError'
 
@@ -35,10 +36,17 @@ export function notifyUnauthorized() {
     unauthorizedListener?.()
 }
 
+export const getMockActor = () => actor
+
 // Returns the signed-in user, or throws 401 / 403 like the real API.
 // `permissions` may be one key or a list (any one of them is enough).
+// Like the real server, the caller's account is read from the STORED accounts on every request,
+// not from what the browser last knew. So a permission change takes effect at once, and a
+// deactivated person's next request is refused with 401 (UC-07).
 export function requireActor(permissions) {
     if (!actor) throw new ApiError(401, 'unauthenticated', 'Please sign in again.')
+        const current = db.users.find((user) => user.id === actor.id)
+    if (!current || !current.isActive) throw new ApiError(401, 'session_ended', 'Your session has ended.')
     if (permissions && !hasAnyPermission(actor, [].concat(permissions))) {
         throw new ApiError(403, 'forbidden', "You don't have permission to do that.")
     }

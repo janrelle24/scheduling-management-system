@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Button from './ui/Button'
 import SelectField from "./ui/SelectField";
 import TextLink from "./ui/TextLink";
-import { mockUsers } from '../data/mockUsers'
+import { db } from '../data/store'
 import { useSession } from '../hooks/useSession'
 import { expireMockSession, notifyUnauthorized } from '../services/mockSession'
 import {
@@ -50,7 +50,7 @@ function DevSessionSwitcher(){
                 <p>DEV ONLY: simulated session, not real authentication. Resets on refresh.</p>
                 <SelectField label="Simulated user" value={user?.id ?? ''} onChange={handleChange}>
                 <option value="">Signed out</option>
-                {mockUsers
+                {db.users
                     .filter((mockUser) => mockUser.isActive)
                     .map((mockUser) => (
                     <option key={mockUser.id} value={mockUser.id}>
