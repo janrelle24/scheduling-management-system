@@ -7,6 +7,7 @@ import Spinner from '../../components/ui/Spinner'
 import { Table, Td, Th } from '../../components/ui/Table'
 import PageHeader from '../../components/PageHeader'
 import StatusBadge from '../../components/StatusBadge'
+import { db } from '../../data/store'
 import { MOCK_NOW_ISO, getNow } from '../../utils/clock'
 import {
     formatAge,
@@ -21,7 +22,6 @@ import { listAuditLogs } from '../../services/auditService'
 import { listEmailNotifications } from '../../services/notificationService'
 import { getAppointmentReport } from '../../services/reportService'
 import { getRequest, listRequests } from '../../services/requestService'
-import { getSchedulingSettings } from '../../services/settingsService'
 import { listUsers } from '../../services/userService'
 import { runMockDataChecks } from './mockDataChecks'
 
@@ -29,16 +29,16 @@ async function loadDemo() {
     const today = getManilaDateStr(MOCK_NOW_ISO)
     const [report, pending, search, todays, calendar, audit, emails, settings, users, maria] =
         await Promise.all([
-        getAppointmentReport(),
-        listRequests({ status: 'pending', pageSize: 4 }),
-        listRequests({ search: 'maria' }),
-        listAppointments({ from: today, to: today, status: 'confirmed' }),
-        getCalendar({ from: '2026-10-26', to: '2026-11-01' }),
-        listAuditLogs({ pageSize: 5 }),
-        listEmailNotifications({ pageSize: 5 }),
-        getSchedulingSettings(),
-        listUsers(),
-        getRequest('req-0142'),
+            getAppointmentReport(),
+            listRequests({ status: 'pending', pageSize: 4 }),
+            listRequests({ search: 'maria' }),
+            listAppointments({ from: today, to: today, status: 'confirmed' }),
+            getCalendar({ from: '2026-10-26', to: '2026-11-01' }),
+            listAuditLogs({ pageSize: 5 }),
+            listEmailNotifications({ pageSize: 5 }),
+            Promise.resolve(db.settings),
+            listUsers(),
+            getRequest('req-0142'),
         ])
     let notFound = 'no error thrown'
     try {
@@ -52,14 +52,19 @@ async function loadDemo() {
 function MockDataPage() {
     const checks = useMemo(() => runMockDataChecks(), [])
     const [demo, setDemo] = useState(null)
+    const [loadFailed, setLoadFailed] = useState(false)
 
     useEffect(() => {
         let active = true
-        loadDemo().then((result) => {
-        if (active) setDemo(result)
+        loadDemo()
+        .then((result) => {
+            if (active) setDemo(result)
+        })
+        .catch(() => {
+            if (active) setLoadFailed(true) // e.g. nobody is signed in, or the account lacks a permission
         })
         return () => {
-        active = false
+            active = false
         }
     }, [])
 
@@ -92,8 +97,12 @@ function MockDataPage() {
             <div>Sample range: <b>{formatTimeRange('2026-10-26T11:00:00+08:00', '2026-10-26T12:00:00+08:00')}</b> and <b>{formatTimeRange('2026-10-26T09:00:00+08:00', '2026-10-26T10:00:00+08:00')}</b></div>
             </dl>
         </Card>
-
-        {!demo ? (
+        
+        {loadFailed ? (
+        <p className="rounded-lg border border-pending-border bg-pending-bg p-4 text-pending-fg">
+            The live service calls were refused. They need a signed-in administrator who can also view requests: sign in at /sign-in, or use the DEV panel to pick Elena Cruz, then reload this page.
+        </p>
+        ) : !demo ? (
             <Spinner label="Calling services…" />
         ) : (
             <>

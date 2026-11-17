@@ -19,6 +19,7 @@ export const AUDIT_ACTIONS = [
     { value: 'user.permissions_changed', label: 'Changed permissions' },
     { value: 'user.deactivated', label: 'Deactivated account' },
     { value: 'user.activated', label: 'Activated account' },
+    { value: 'settings.changed', label: 'Changed scheduling settings' },
     { value: 'security.access_denied', label: 'Access denied' },
     { value: 'auth.login_failed', label: 'Login failed' },
 ]
@@ -38,7 +39,8 @@ function getRecordLabel(row) {
     }
     if (details.referenceNumber) return details.referenceNumber
     if (row.action === 'auth.login_failed') return details.email
-    if (row.action === 'user.permissions_changed') return details.targetName
+    if (row.action === 'user.') return details.targetName ?? ''
+    if (row.action === 'settings.changed') return 'Scheduling settings'
     if (row.action === 'security.access_denied') return details.attempted ?? ''
     if (row.action === 'report.exported') return details.report
     return ''

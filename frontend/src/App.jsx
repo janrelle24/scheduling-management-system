@@ -21,6 +21,7 @@ import DashboardPage from './pages/staff/DashboardPage'
 import NewInPersonRequestPage from './pages/staff/NewInPersonRequestPage'
 import RequestDetailPage from './pages/staff/RequestDetailPage'
 import RequestsPage from './pages/staff/RequestsPage'
+import SchedulingSettingsPage from './pages/staff/SchedulingSettingsPage'
 import StaffAccountsPage from './pages/staff/StaffAccountsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { NAV } from './routes/navigation'
@@ -104,7 +105,7 @@ function App() {
               path="/admin/settings"
               element={
                 <ProtectedRoute item={NAV.settings}>
-                  <ComingSoonPage title="Scheduling Settings" />
+                  <SchedulingSettingsPage />
                 </ProtectedRoute>
               }
             />

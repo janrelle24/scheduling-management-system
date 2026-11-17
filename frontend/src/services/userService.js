@@ -1,4 +1,6 @@
-// Mirrors: GET /api/v1/users  (create/update come with the Staff Accounts feature)
+// Mirrors: GET/POST /api/v1/users, GET/PATCH /api/v1/users/:id, PUT /api/v1/users/:id/permissions
+// All need users.manage, enforced HERE (the screen's checks are only a courtesy, FR-02, UC-07).
+// Account changes are audited; passwords and invitation links never are.
 import { db } from '../data/store'
 import { normalizePermissions } from '../utils/accountPermissions'
 import { PERMISSIONS } from '../utils/permissions'
@@ -7,7 +9,7 @@ import { ApiError } from './ApiError'
 import { SHOW_DEV_HELPERS, issueInvitation } from './authService'
 import { nowIso } from './decisions'
 import { mockApi } from './mockApi'
-import { getMockActor, requireActor } from './mockSession'
+import { requireAuthorized } from './security'
 
 const normalizeEmail = (email) => email.trim().toLowerCase() // emails are unique ignoring case and spaces
 const cleanName = (name) => name.trim().replace(/\s+/g, ' ')
@@ -33,17 +35,9 @@ function writeAudit(actorId, action, details) {
     })
 }
 
-function requireManager() {
-    try {
-        return requireActor(PERMISSIONS.USERS_MANAGE)
-    } catch (error) {
-        const actor = getMockActor()
-        if (error.status === 403 && actor) {
-            writeAudit(actor.id, 'security.access_denied', { attempted: 'Account management', result: 'failed' })
-        }
-        throw error
-    }
-}
+// Only users.manage may call anything here. A refused attempt by a signed-in user is recorded
+// as a security event (UC-07) and then refused.
+const requireManager = () => requireAuthorized(PERMISSIONS.USERS_MANAGE, 'Account management')
 
 function validationError(fieldErrors) {
     return new ApiError(422, 'validation_failed', 'Please correct the highlighted fields.', { fieldErrors })
