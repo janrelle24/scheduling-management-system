@@ -16,6 +16,7 @@ import RequestFormPage from './pages/public/RequestFormPage'
 import RequestSubmittedPage from './pages/public/RequestSubmittedPage'
 import MockDataPage from './pages/dev/MockDataPage'
 import StyleGuidePage from './pages/dev/StyleGuidePage'
+import AuditLogPage from './pages/staff/AuditLogPage'
 import CalendarPage from './pages/staff/CalendarPage'
 import DashboardPage from './pages/staff/DashboardPage'
 import NewInPersonRequestPage from './pages/staff/NewInPersonRequestPage'
@@ -113,7 +114,7 @@ function App() {
               path="/admin/audit-log"
               element={
                 <ProtectedRoute item={NAV.auditLog}>
-                  <ComingSoonPage title="Audit Log" />
+                  <AuditLogPage />
                 </ProtectedRoute>
               }
             />

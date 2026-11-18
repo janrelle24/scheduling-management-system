@@ -1,8 +1,10 @@
 // Mirrors: GET /api/v1/admin/audit-logs  (read-only: there are no edit or delete functions)
 import { db } from '../data/store'
 import { formatTime, getManilaDateStr } from '../utils/datetime'
+import { PERMISSIONS } from '../utils/permissions'
 import { getUserName } from './lookups'
 import { inDateRange, mockApi, paginate } from './mockApi'
+import { requireAuthorized } from './security'
 
 export const AUDIT_ACTIONS = [
     { value: 'request.created', label: 'Encoded request' },
@@ -14,6 +16,7 @@ export const AUDIT_ACTIONS = [
     { value: 'appointment.cancelled', label: 'Cancelled appointment' },
     { value: 'appointment.completed', label: 'Marked completed' },
     { value: 'report.exported', label: 'Exported report' },
+    { value: 'notification.retried', label: 'Retried email' },
     { value: 'user.created', label: 'Created account' },
     { value: 'user.updated', label: 'Updated account' },
     { value: 'user.permissions_changed', label: 'Changed permissions' },
@@ -37,6 +40,7 @@ function getRecordLabel(row) {
     if (row.action === 'appointment.rescheduled') {
         return `${details.referenceNumber} · ${formatMove(details.fromStartAt, details.toStartAt)}`
     }
+    if (row.action === 'notification.retried') return `${details.referenceNumber} · ${details.template}`
     if (details.referenceNumber) return details.referenceNumber
     if (row.action === 'auth.login_failed') return details.email
     if (row.action === 'user.') return details.targetName ?? ''
@@ -47,13 +51,17 @@ function getRecordLabel(row) {
 }
 
 // params: { search, action, from, to, page, pageSize }. Newest first.
+// Needs audit_logs.view (API-12: anyone else gets 403 and NO rows; the attempt is recorded).
+// Each row has only what the screen shows: no IP address, no raw details, no account ids.
 export function listAuditLogs({ search = '', action = '', from = '', to = '', page = 1, pageSize = 10 } = {}) {
     return mockApi(() => {
+        requireAuthorized(PERMISSIONS.AUDIT_LOGS_VIEW, 'Audit log')
         const term = search.trim().toLowerCase()
         const labels = Object.fromEntries(AUDIT_ACTIONS.map((a) => [a.value, a.label]))
         const rows = db.auditLogs
-        .map((row) => ({
-            ...row,
+        .map((row, index) => ({
+            ...row, 
+            index, // lets entries with the same time (the mock clock is fixed) keep their order
             // "Unknown" is shown when nobody was signed in (e.g. a failed login).
             actorName: getUserName(row.userId) ?? (row.action === 'auth.login_failed' ? 'Unknown' : 'System'),
             actionLabel: labels[row.action] ?? row.action,
@@ -69,7 +77,19 @@ export function listAuditLogs({ search = '', action = '', from = '', to = '', pa
             row.actionLabel.toLowerCase().includes(term) ||
             row.recordLabel.toLowerCase().includes(term),
         )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        return paginate(rows, page, pageSize)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt) ||  b.index - a.index )
+        const shown = paginate(rows, page, pageSize)
+        return {
+            ...shown,
+            items: shown.items.map(({ id, createdAt, actorName, action: actionValue, actionLabel, recordLabel, result }) => ({
+                id,
+                createdAt,
+                actorName,
+                action: actionValue,
+                actionLabel,
+                recordLabel,
+                result,
+            })),
+        }
     })
 }

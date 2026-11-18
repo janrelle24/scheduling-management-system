@@ -48,7 +48,8 @@ export const NAV_ITEMS = [
         label: 'Audit Log',
         to: '/admin/audit-log',
         section: 'admin',
-        requiresAny: [P.AUDIT_LOGS_VIEW],
+        // the page has two tabs, each with its own permission
+        requiresAny: [P.AUDIT_LOGS_VIEW, P.EMAIL_NOTIFICATIONS_VIEW],
     },    
 ]
 

@@ -20,3 +20,17 @@ export function readListParams(params, allowedStatuses) {
 
 export const hasActiveFilters = (filters) =>
     Boolean(filters.q || filters.status || filters.source || filters.dateFrom || filters.dateTo)
+
+// The Audit Log tab's filters, read from the URL like the Requests list does.
+//   allowedActions: the action values the Action filter offer
+export function readAuditParams(params, allowedActions) {
+    const action = params.get('action')
+    const page = Number.parseInt(params.get('page') ?? '', 10)
+    return {
+        q: (params.get('q') ?? '').slice(0, 100),
+        action: allowedActions.includes(action) ? action : '',
+        dateFrom: isDateString(params.get('dateFrom')) ? params.get('dateFrom') : '',
+        dateTo: isDateString(params.get('dateTo')) ? params.get('dateTo') : '',
+        page: Number.isInteger(page) && page >= 1 ? page : 1,
+    }
+}
