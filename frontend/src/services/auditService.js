@@ -46,7 +46,7 @@ function getRecordLabel(row) {
     if (row.action === 'user.') return details.targetName ?? ''
     if (row.action === 'settings.changed') return 'Scheduling settings'
     if (row.action === 'security.access_denied') return details.attempted ?? ''
-    if (row.action === 'report.exported') return details.report
+    if (row.action === 'report.exported') return details.format ? `${details.report} · ${details.format}` : details.report
     return ''
 }
 

@@ -35,3 +35,15 @@ export function getEmailFault() {
 export function setEmailFault(fault){
     emailFault = fault
 }
+
+// DEVELOPMENT ONLY. Makes a report export fail, to test the "export failed, try again" message.
+//   none | fail
+let exportFault = 'none'
+
+export function getExportFault() {
+    return exportFault
+}
+
+export function setExportFault(fault) {
+    exportFault = fault
+}

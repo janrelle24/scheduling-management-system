@@ -5,7 +5,6 @@ import ToastProvider from './context/ToastProvider'
 import AuthLayout from './layouts/AuthLayout'
 import PublicLayout from './layouts/PublicLayout'
 import StaffLayout from './layouts/StaffLayout'
-import ComingSoonPage from './pages/ComingSoonPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage'
 import SignInPage from './pages/auth/SignInPage'
@@ -21,6 +20,7 @@ import CalendarPage from './pages/staff/CalendarPage'
 import DashboardPage from './pages/staff/DashboardPage'
 import NewInPersonRequestPage from './pages/staff/NewInPersonRequestPage'
 import RequestDetailPage from './pages/staff/RequestDetailPage'
+import ReportsPage from './pages/staff/ReportsPage'
 import RequestsPage from './pages/staff/RequestsPage'
 import SchedulingSettingsPage from './pages/staff/SchedulingSettingsPage'
 import StaffAccountsPage from './pages/staff/StaffAccountsPage'
@@ -89,7 +89,7 @@ function App() {
               path="/reports"
               element={
                 <ProtectedRoute item={NAV.reports}>
-                  <ComingSoonPage title="Reports" />
+                  <ReportsPage />
                 </ProtectedRoute>
               }
             />

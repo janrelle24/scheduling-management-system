@@ -9,9 +9,11 @@ import { useSession } from '../hooks/useSession'
 import { expireMockSession, notifyUnauthorized } from '../services/mockSession'
 import {
     getEmailFault,
+    getExportFault,
     getReadFault,
     getSubmissionFault,
     setEmailFault, 
+    setExportFault,
     setReadFault,
     setSubmissionFault 
 } from '../services/mockFaults'
@@ -21,6 +23,7 @@ function DevSessionSwitcher(){
     const [fault, setFault] = useState(getSubmissionFault())
     const [readFault, setReadFaultState] = useState(getReadFault())
     const [emailFault, setEmailFaultState] = useState(getEmailFault())
+    const [exportFault, setExportFaultState] = useState(getExportFault())
 
     function handleChange(event){
         const userId = event.target.value
@@ -31,6 +34,10 @@ function DevSessionSwitcher(){
     function handleFaultChange(event) {
         setFault(event.target.value)
         setSubmissionFault(event.target.value)
+    }
+    function handleExportFaultChange(event) {
+        setExportFaultState(event.target.value)
+        setExportFault(event.target.value)
     }
     function handleEmailFaultChange(event) {
         setEmailFaultState(event.target.value)
@@ -71,6 +78,10 @@ function DevSessionSwitcher(){
                 <SelectField label="Decision emails (approve, reject…)" value={emailFault} onChange={handleEmailFaultChange}>
                     <option value="none">Queue normally</option>
                     <option value="fail">Fail to send</option>
+                </SelectField>
+                <SelectField label="Report export" value={exportFault} onChange={handleExportFaultChange}>
+                    <option value="none">Works</option>
+                    <option value="fail">Fails</option>
                 </SelectField>
                 <Button
                     variant="secondary"
